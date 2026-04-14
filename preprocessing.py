@@ -100,7 +100,7 @@ for i in range(num_windows):
         else:
             print("Invalid input. Enter 1, 0, or q.")
           
-        chatter_duration = input()
+        chatter_streak = input()
 
     if label == "q":
         break
@@ -119,7 +119,7 @@ for i in range(num_windows):
         "rolling_avg_volume": rolling_avg_volume,
         "rolling_peak_volume": rolling_peak_volume,
         "is_chatter": label,
-        "chatter_duration": chatter_duration
+        "chatter_streak": chatter_streak
     }
 
     data_rows.append(row)
