@@ -7,14 +7,21 @@ from collections import deque
 # -----------------------
 # CONFIG
 # -----------------------
-AUDIO_FILE = "tlc-apr-8.wav"
-WINDOW_DURATION = 4.0
-STEP_DURATION = 1.0
+AUDIO_FILE = "recordings/REC 03-25-2026 PALMA-12PM.wav"
+WINDOW_DURATION = 5.0
+STEP_DURATION = 5.0
 SAMPLE_RATE = 16000
 ROLLING_HISTORY = 3
-OUTPUT_CSV = "tlc-apr-8-dataset2.csv"
+OUTPUT_CSV = "palma-03-25-dataset12.csv"
 
 NEAR_SILENCE_THRESHOLD = 0.05
+
+def format_time(seconds):
+    seconds = int(seconds)
+    h = seconds // 3600
+    m = (seconds % 3600) // 60
+    s = seconds % 60
+    return f"{h:02d}:{m:02d}:{s:02d}"
 
 # -----------------------
 # FEATURE FUNCTION
@@ -77,7 +84,7 @@ for i in range(num_windows):
         sd.wait()
 
         while True:
-            inp = input(f"[{start/sr:.2f}-{end/sr:.2f}] c/n/q: ")
+            inp = input(f"[{format_time(start/sr)}-{format_time(end/sr)}] c/n/q: ")
             if inp in ["c", "n", "q"]:
                 break
 
