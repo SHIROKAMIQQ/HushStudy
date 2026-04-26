@@ -1,5 +1,6 @@
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
 
 # =========================
 # LOAD DATASET
@@ -19,6 +20,23 @@ feature_cols = [
 CONFIDENCE_HIGH = 0.8
 CONFIDENCE_LOW = 0.2
 MAX_ITERATIONS = 50
+
+# =========================
+# NORMALIZATION
+# =========================
+
+scaler = StandardScaler()
+normalized_features = pd.DataFrame(
+    scaler.fit_transform(df[feature_cols]),
+    columns=feature_cols
+)
+
+df = pd.concat([
+    normalized_features, 
+    df['is_chatter'].reset_indec(drop=True)],
+    axis=1
+)
+
 
 # =========================
 # ITERATIVE SELF-TRAINING LOOP
