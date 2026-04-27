@@ -1,11 +1,14 @@
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, precision_score, recall_score
 
 # =========================
 # LOAD DATASET
 # =========================
-df = pd.read_csv("tlc-apr-8-dataset.csv")
+DATASET_CSV="datasets/palma-03-25-dataset12.csv"
+df = pd.read_csv(DATASET_CSV)
 
 feature_cols = [
     "avg_volume",
@@ -17,102 +20,45 @@ feature_cols = [
     "rolling_peak_volume"
 ]
 
-CONFIDENCE_HIGH = 0.8
-CONFIDENCE_LOW = 0.2
-MAX_ITERATIONS = 50
+X = df[feature_cols]
+y = df["is_chatter"]
+
+# =========================
+# TRAIN-TEST SPLIT
+# =========================
+X_train, X_test, y_train, y_test = train_test_split(
+  X, y,
+  test_size=0.2,
+  random_state=42,
+  stratify=y
+)
 
 # =========================
 # NORMALIZATION
 # =========================
 
 scaler = StandardScaler()
-normalized_features = pd.DataFrame(
-    scaler.fit_transform(df[feature_cols]),
-    columns=feature_cols
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# =========================
+# TRAIN MODEL
+# =========================
+model = LogisticRegression(
+  max_iter=1000,
+  class_weight="balanced"
 )
-
-df = pd.concat([
-    normalized_features, 
-    df['is_chatter'].reset_indec(drop=True)],
-    axis=1
-)
-
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
 
 # =========================
-# ITERATIVE SELF-TRAINING LOOP
+# EVALUATION
 # =========================
-for iteration in range(MAX_ITERATIONS):
-    print(f"\n=== Iteration {iteration + 1} ===")
 
-    labeled_df = df[df["is_chatter"].notna()].copy()
-    unlabeled_df = df[df["is_chatter"].isna()].copy()
+accuracy = accuracy_score(y_test, y_pred)
+precision = precision_score(y_test, y_pred)
+recall = recall_score(y_test, y_pred)
 
-    print(f"Labeled rows: {len(labeled_df)}")
-    print(f"Unlabeled rows: {len(unlabeled_df)}")
-
-    # stop if fully labeled
-    if len(unlabeled_df) == 0:
-        print("All rows classified.")
-        break
-
-    # train model
-    X_train = labeled_df[feature_cols]
-    y_train = labeled_df["is_chatter"]
-
-    model = LogisticRegression(max_iter=1000)
-    model.fit(X_train, y_train)
-
-    # predict unlabeled rows
-    X_unlabeled = unlabeled_df[feature_cols]
-    probs = model.predict_proba(X_unlabeled)[:, 1]
-    preds = model.predict(X_unlabeled)
-
-    unlabeled_df["predicted_chatter"] = preds
-    unlabeled_df["confidence"] = probs
-
-    # keep only high-confidence rows
-    confident_mask = (
-        (unlabeled_df["confidence"] > CONFIDENCE_HIGH) |
-        (unlabeled_df["confidence"] < CONFIDENCE_LOW)
-    )
-
-    confident_rows = unlabeled_df[confident_mask].copy()
-
-    print(f"Confident new labels: {len(confident_rows)}")
-
-    # stop if no confident rows found
-    if len(confident_rows) == 0:
-        print("No more high-confidence rows. Stopping.")
-        break
-
-    # assign pseudo labels back to original dataframe
-    df.loc[confident_rows.index, "is_chatter"] = confident_rows["predicted_chatter"]
-
-# =========================
-# FINAL PASS: FORCE LABEL REMAINING ROWS
-# =========================
-remaining_unlabeled = df["is_chatter"].isna().sum()
-
-if remaining_unlabeled > 0:
-    print(f"\nFinal pass labeling remaining {remaining_unlabeled} rows.")
-
-    labeled_df = df[df["is_chatter"].notna()].copy()
-    unlabeled_df = df[df["is_chatter"].isna()].copy()
-
-    X_train = labeled_df[feature_cols]
-    y_train = labeled_df["is_chatter"]
-
-    model = LogisticRegression(max_iter=1000)
-    model.fit(X_train, y_train)
-
-    X_unlabeled = unlabeled_df[feature_cols]
-    final_preds = model.predict(X_unlabeled)
-
-    df.loc[unlabeled_df.index, "is_chatter"] = final_preds
-
-# =========================
-# EXPORT COMPLETE CSV
-# =========================
-df.to_csv("fully_classified_chatter.csv", index=False)
-
-print("\nSaved completed dataset to fully_classified_chatter.csv")
+print("Accuracy:", accuracy)
+print("Precision:", precision)
+print("Recall:", recall)
