@@ -7,7 +7,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score
 # =========================
 # LOAD DATASET
 # =========================
-DATASET_CSV="datasets/palma-03-25-dataset12.csv"
+DATASET_CSV="datasets/master.csv"
 df = pd.read_csv(DATASET_CSV)
 
 feature_cols = [
