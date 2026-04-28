@@ -7,7 +7,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score
 # =========================
 # LOAD DATASET
 # =========================
-DATASET_CSV="datasets/master.csv"
+DATASET_CSV="chatter_classifier_datasets/master.csv"
 df = pd.read_csv(DATASET_CSV)
 
 feature_cols = [
