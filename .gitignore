@@ -1,2 +1,5 @@
 venv/
 recordings/
+.env
+__pycache__/
+tmp/
