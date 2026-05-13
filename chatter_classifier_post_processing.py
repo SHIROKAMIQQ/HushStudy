@@ -7,8 +7,8 @@ import joblib
 # -----------------------------
 MODEL_PATH = "chatter_classifier.pkl"
 SCALER_PATH = "scaler.pkl"
-INPUT_CSV = "tlc-04-08-partial-data.csv"
-OUTPUT_CSV = "tlc-04-08-classified-with-duration-left.csv"
+INPUT_CSV = "nigs-04-08-dataset1230.csv"
+OUTPUT_CSV = "nigs1230-04-08-classified-with-duration-left.csv"
 
 FEATURE_COLS = [
     "avg_volume",
@@ -23,8 +23,8 @@ FEATURE_COLS = [
 # -----------------------------
 # LOAD MODEL AND DATASET
 # -----------------------------
-model = joblib.load(MODEL_PATH)
-scaler = joblib.load(SCALER_PATH)
+# model = joblib.load(MODEL_PATH)
+# scaler = joblib.load(SCALER_PATH)
 
 df = pd.read_csv(INPUT_CSV)
 
@@ -34,13 +34,13 @@ df = df.sort_values("timestamp_start").reset_index(drop=True)
 # -----------------------------
 # FILL is_chatter USING MODEL
 # -----------------------------
-X = scaler.transform(df[FEATURE_COLS])
+# X = scaler.transform(df[FEATURE_COLS])
 
-df["is_chatter"] = model.predict(X).astype(int)
+# df["is_chatter"] = model.predict(X).astype(int)
 
-# Optional confidence/probability column
-if hasattr(model, "predict_proba"):
-    df["chatter_probability"] = model.predict_proba(X)[:, 1]
+# # Optional confidence/probability column
+# if hasattr(model, "predict_proba"):
+#     df["chatter_probability"] = model.predict_proba(X)[:, 1]
 
 # -----------------------------
 # COMPUTE chatter_streak
