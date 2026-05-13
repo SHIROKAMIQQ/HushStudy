@@ -21,7 +21,6 @@ feature_cols = [
     "rolling_peak_volume", 
     "rolling_decay",
     "centroid_volatility", 
-    "is_chatter"
 ]
 
 X = df[feature_cols]
