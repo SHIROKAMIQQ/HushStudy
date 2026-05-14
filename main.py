@@ -70,7 +70,7 @@ async def upload_audio(file: UploadFile = File(...)):
 
   output = {
     "is_chatter": last_is_chatter,
-    "duration_left_seconds": int(y_duration_prediction[-1])
+    "duration_left_seconds": int(y_duration_prediction[-1]) if y_duration_prediction[-1] != None else None
   }
   print(output)
   return output 
