@@ -1,4 +1,5 @@
 from fastapi import FastAPI, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from pathlib import Path
 import shutil
@@ -18,6 +19,14 @@ TMP_DIR.mkdir(parents=True, exist_ok=True)
 STUDYABLE_THRESHOLD = 60 * 30 # in seconds
 
 app = FastAPI()
+
+app.add_middleware(
+  CORSMiddleware,
+  allow_origins=["*"],
+  allow_credentials=True,
+  allow_methods=["*"],
+  allow_headers=["*"]
+)
 
 """
 Given an input audio file tmp.webm:
