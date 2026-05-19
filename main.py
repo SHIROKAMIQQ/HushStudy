@@ -12,6 +12,8 @@ import chatter_classifier
 import duration_prediction
 import feature_extraction
 
+import sqlite3
+
 load_dotenv()
 BASE_DIR = Path(os.getenv("BASE_DIR", "."))
 TMP_DIR = BASE_DIR / "tmp"
@@ -19,8 +21,32 @@ TMP_DIR.mkdir(parents=True, exist_ok=True)
 
 DEFAULT_STUDYABLE_THRESHOLD = 60 * 30 # in seconds
 
-# temp struc, replace with formal database sql later
-user_thresholds = {}
+# initialize DB
+conn = sqlite3.connect("thresholdprefs.db")
+conn.execute("""
+  CREATE TABLE IF NOT EXISTS thresholds (
+    user_id TEXT PRIMARY KEY,
+    threshold INTEGER NOT NULL DEFAULT 1800
+  )
+""")
+conn.close()
+
+#helper function for DB access
+def get_db_threshold(user_id: str) -> int:
+  with sqlite3.connect("thresholdprefs.db") as conn:
+    cur = conn.execute("SELECT threshold FROM thresholds WHERE user_id = ?", (user_id))
+    row = cur.fetchone()
+    if row:
+      return row[0]
+    else:
+      conn.execute("INSERT INTO thresholds (user_id, threshold) VALUES (?, ?)", (user_id, DEFAULT_STUDYABLE_THRESHOLD))
+      return DEFAULT_STUDYABLE_THRESHOLD
+
+def set_db_threshold(user_id: str, threshold: int):
+  with sqlite3.connect("thresholdprefs.db") as conn:
+    conn.execute("INSERT INTO thresholds (user_id, threshold) VALUES (?, ?) "
+                 "ON CONFLICT(user_id) DO UPDATE SET threshold = excluded.threshold", (user_id,threshold)
+      )
 
 app = FastAPI()
 
@@ -46,9 +72,8 @@ def get_user_id(request: Request, response: Response) -> str:
       samesite="lax",
       path="/"
     )
-    user_thresholds[user_id] = DEFAULT_STUDYABLE_THRESHOLD
+    set_db_threshold(user_id, DEFAULT_STUDYABLE_THRESHOLD)
   return user_id
-
 
 #endpoint for get/create user identification cookie
 @app.get("/identify")
@@ -60,14 +85,14 @@ async def identify(request: Request, response: Response):
 @app.get("/threshold")
 async def get_threshold(request: Request, response: Response):
   user_id = get_user_id(request, response)
-  threshold = user_thresholds.get(user_id, DEFAULT_STUDYABLE_THRESHOLD)
+  threshold = get_db_threshold(user_id)
   return {"threshold_seconds": threshold, "threshold_minutes": threshold / 60}
 
 #endpoint for threshold setter
 @app.post("/threshold")
 async def set_threshold(threshold_seconds: int = Form(...), request: Request = None, response: Response = None):
   user_id = get_user_id(request, response)
-  user_thresholds[user_id] = threshold_seconds
+  set_db_threshold(user_id, threshold_seconds)
   return {"message": "Threshold updated", "threshold_seconds": threshold_seconds}
 
 """
@@ -83,8 +108,8 @@ Given an input audio file tmp.webm:
 async def upload_audio(file: UploadFile = File(...), request: Request = None, response: Response = None):
 
   user_id = get_user_id(request, response)
-  user_threshold = user_thresholds.get(user_id, DEFAULT_STUDYABLE_THRESHOLD)
-
+  user_threshold = get_db_threshold(user_id)
+  
   # Save input audio as tmp/tmp.wav  
   input_path = TMP_DIR / "tmp.webm"
   output_path = TMP_DIR / "tmp.wav"
@@ -113,20 +138,28 @@ async def upload_audio(file: UploadFile = File(...), request: Request = None, re
   y_is_chatter = chatter_classifier.model.predict(X_scaled)
   last_is_chatter = bool(y_is_chatter[-1])
 
+  studyable = False
+
   if last_is_chatter:
     y_duration_prediction = duration_prediction.model.predict(X[duration_prediction.feature_cols])
+    if int(y_duration_prediction[-1]) <= user_threshold:
+      studyable = True
   else:
     y_duration_prediction = [None] * len(y_is_chatter)
+    studyable = True
 
+  
   debug_df = pd.DataFrame({
     "is_chatter": y_is_chatter,
-    "duration_prediction": y_duration_prediction
+    "duration_prediction": y_duration_prediction,
+    "studyable": studyable
   })
   print(debug_df)
 
   output = {
     "is_chatter": last_is_chatter,
-    "duration_left_seconds": int(y_duration_prediction[-1]) if y_duration_prediction[-1] != None else None
+    "duration_left_seconds": int(y_duration_prediction[-1]) if y_duration_prediction[-1] != None else None,
+    "studyable": studyable
   }
   print(output)
   return output 
