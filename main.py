@@ -33,9 +33,9 @@ conn.execute("""
 conn.close()
 
 #helper function for DB access
-def get_db_threshold(user_id: str) -> int:
+def get_threshold(user_id: str) -> int:
   with sqlite3.connect("thresholdprefs.db") as conn:
-    cur = conn.execute("SELECT threshold FROM thresholds WHERE user_id = ?", (user_id))
+    cur = conn.execute("SELECT threshold FROM thresholds WHERE user_id = ?", (user_id,))
     row = cur.fetchone()
     if row:
       return row[0]
@@ -43,11 +43,17 @@ def get_db_threshold(user_id: str) -> int:
       conn.execute("INSERT INTO thresholds (user_id, threshold) VALUES (?, ?)", (user_id, DEFAULT_STUDYABLE_THRESHOLD))
       return DEFAULT_STUDYABLE_THRESHOLD
 
-def set_db_threshold(user_id: str, threshold: int):
+def set_db_threshold(user_id: str, new_threshold: int):
   with sqlite3.connect("thresholdprefs.db") as conn:
-    conn.execute("INSERT INTO thresholds (user_id, threshold) VALUES (?, ?) "
-                 "ON CONFLICT(user_id) DO UPDATE SET threshold = excluded.threshold", (user_id,threshold)
-      )
+    conn.execute(
+      """
+      INSERT INTO thresholds (user_id, threshold)
+      VALUES (?, ?)
+      ON CONFLICT(user_id)
+      DO UPDATE SET threshold = excluded.threshold
+      """,
+      (user_id, new_threshold)
+    )
 
 app = FastAPI()
 
@@ -75,13 +81,6 @@ def get_user_id(request: Request, response: Response) -> str:
     set_db_threshold(user_id, DEFAULT_STUDYABLE_THRESHOLD)
   return user_id
 
-#endpoint for threshold getter
-@app.get("/threshold")
-async def get_threshold(request: Request, response: Response):
-  user_id = get_user_id(request, response)
-  threshold = get_db_threshold(user_id)
-  return {"threshold_seconds": threshold, "threshold_minutes": threshold / 60}
-
 #endpoint for threshold setter
 # TODO: change update_threshold logic
 @app.post("/threshold")
@@ -104,9 +103,8 @@ async def upload_audio(request: Request, response: Response, file: UploadFile = 
 
   user_id = get_user_id(request, response)
   print(user_id)
-  # user_threshold = get_db_threshold(user_id)
-  user_threshold = 30*60
-  
+  user_threshold = get_threshold(user_id)
+    
   # Save input audio as tmp/tmp.wav  
   input_path = TMP_DIR / "tmp.webm"
   output_path = TMP_DIR / "tmp.wav"
