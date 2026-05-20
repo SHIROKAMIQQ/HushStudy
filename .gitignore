@@ -3,3 +3,4 @@ recordings/
 .env
 __pycache__/
 tmp/
+thresholdprefs.db
