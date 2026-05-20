@@ -21,6 +21,7 @@ TMP_DIR = BASE_DIR / "tmp"
 TMP_DIR.mkdir(parents=True, exist_ok=True)
 
 DEFAULT_STUDYABLE_THRESHOLD = 60 * 30 # in seconds
+LEARNING_RATE = 0.3 #arbitrary 
 
 # initialize DB
 conn = sqlite3.connect("thresholdprefs.db")
@@ -43,7 +44,7 @@ def get_threshold(user_id: str) -> int:
       conn.execute("INSERT INTO thresholds (user_id, threshold) VALUES (?, ?)", (user_id, DEFAULT_STUDYABLE_THRESHOLD))
       return DEFAULT_STUDYABLE_THRESHOLD
 
-def set_db_threshold(user_id: str, new_threshold: int):
+def set_threshold(user_id: str, new_threshold: int):
   with sqlite3.connect("thresholdprefs.db") as conn:
     conn.execute(
       """
@@ -78,16 +79,23 @@ def get_user_id(request: Request, response: Response) -> str:
       secure = False,
       samesite="lax",
     )
-    set_db_threshold(user_id, DEFAULT_STUDYABLE_THRESHOLD)
+    set_threshold(user_id, DEFAULT_STUDYABLE_THRESHOLD)
   return user_id
 
-#endpoint for threshold setter
-# TODO: change update_threshold logic
-@app.post("/threshold")
-async def set_threshold(threshold_seconds: int = Form(...), request: Request = None, response: Response = None):
+#endpoint for model adjustment to threshold
+"""
+Given a duration prediction:, 
+  Use arbitrary learning rate to adjust the 
+  user's saved studyable threshold and update
+  database accordingly.
+"""
+@app.post("/adjust-threshold")
+async def adjust_threshold(duration_prediction: int, request: Request = None, response: Response = None):
   user_id = get_user_id(request, response)
-  set_db_threshold(user_id, threshold_seconds)
-  return {"message": "Threshold updated", "threshold_seconds": threshold_seconds}
+  old_threshold = get_threshold(user_id)
+  new_threshold = int( (1-LEARNING_RATE) * old_threshold + (LEARNING_RATE) * duration_prediction )
+  set_threshold(user_id, new_threshold)
+  return {"message": "Threshold adjusted", "new_threshold": new_threshold}
 
 """
 Given an input audio file tmp.webm:
