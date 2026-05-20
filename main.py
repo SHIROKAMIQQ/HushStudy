@@ -155,7 +155,7 @@ async def upload_audio(request: Request, response: Response, file: UploadFile = 
 
   output = JSONResponse({
     "is_chatter": last_is_chatter,
-    "duration_left_seconds": int(y_duration_prediction[-1]) if y_duration_prediction[-1] != None else None,
+    "duration_seconds_left": int(y_duration_prediction[-1]) if y_duration_prediction[-1] != None else None,
     "studyable": studyable
   })
   output.set_cookie(
