@@ -1,4 +1,5 @@
 from fastapi import FastAPI, UploadFile, File, Form, Request, Response, Cookie, HTTPException
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from pathlib import Path
@@ -52,7 +53,7 @@ app = FastAPI()
 
 app.add_middleware(
   CORSMiddleware,
-  allow_origins=["*"],
+  allow_origins=["http://localhost:5173"],
   allow_credentials=True,
   allow_methods=["*"],
   allow_headers=["*"]
@@ -67,19 +68,12 @@ def get_user_id(request: Request, response: Response) -> str:
       key="user_id",
       value=user_id,
       max_age = 31536000, #1 yr in sec
-      httponly = False,
+      httponly = True,
       secure = False,
       samesite="lax",
-      path="/"
     )
     set_db_threshold(user_id, DEFAULT_STUDYABLE_THRESHOLD)
   return user_id
-
-#endpoint for get/create user identification cookie
-@app.get("/identify")
-async def identify(request: Request, response: Response):
-  user_id = get_user_id(request, response)
-  return {"user_id": user_id}
 
 #endpoint for threshold getter
 @app.get("/threshold")
@@ -89,6 +83,7 @@ async def get_threshold(request: Request, response: Response):
   return {"threshold_seconds": threshold, "threshold_minutes": threshold / 60}
 
 #endpoint for threshold setter
+# TODO: change update_threshold logic
 @app.post("/threshold")
 async def set_threshold(threshold_seconds: int = Form(...), request: Request = None, response: Response = None):
   user_id = get_user_id(request, response)
@@ -105,10 +100,12 @@ Given an input audio file tmp.webm:
   Modifications to incorporate designated user threshold
 """
 @app.post("/upload-audio")
-async def upload_audio(file: UploadFile = File(...), request: Request = None, response: Response = None):
+async def upload_audio(request: Request, response: Response, file: UploadFile = File(...)):
 
   user_id = get_user_id(request, response)
-  user_threshold = get_db_threshold(user_id)
+  print(user_id)
+  # user_threshold = get_db_threshold(user_id)
+  user_threshold = 30*60
   
   # Save input audio as tmp/tmp.wav  
   input_path = TMP_DIR / "tmp.webm"
@@ -156,11 +153,19 @@ async def upload_audio(file: UploadFile = File(...), request: Request = None, re
   })
   print(debug_df)
 
-  output = {
+  output = JSONResponse({
     "is_chatter": last_is_chatter,
     "duration_left_seconds": int(y_duration_prediction[-1]) if y_duration_prediction[-1] != None else None,
     "studyable": studyable
-  }
+  })
+  output.set_cookie(
+    key="user_id",
+    value=user_id,
+    max_age = 31536000, #1 yr in sec
+    httponly = True,
+    secure = False,
+    samesite="lax",
+  )
   print(output)
   return output 
   
