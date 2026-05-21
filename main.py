@@ -14,6 +14,7 @@ import duration_prediction
 import feature_extraction
 
 import sqlite3
+import time
 
 load_dotenv()
 BASE_DIR = Path(os.getenv("BASE_DIR", "."))
@@ -109,6 +110,8 @@ Given an input audio file tmp.webm:
 @app.post("/upload-audio")
 async def upload_audio(request: Request, response: Response, file: UploadFile = File(...)):
 
+  total_start = time.perf_counter()
+
   user_id = get_user_id(request, response)
   print(user_id)
   user_threshold = get_threshold(user_id)
@@ -152,6 +155,10 @@ async def upload_audio(request: Request, response: Response, file: UploadFile = 
     studyable = True
 
   
+  total_end = time.perf_counter()
+  total_latency = total_end - total_start
+  print(f"LATENCY ASSESSMENT: {total_latency}")
+
   debug_df = pd.DataFrame({
     "is_chatter": y_is_chatter,
     "duration_prediction": y_duration_prediction,
