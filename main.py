@@ -140,8 +140,7 @@ async def upload_audio(request: Request, response: Response, file: UploadFile = 
   print(X.shape)
 
   # Predict using models
-  X_scaled = chatter_classifier.scaler.transform(X[chatter_classifier.feature_cols])
-  y_is_chatter = chatter_classifier.model.predict(X_scaled)
+  y_is_chatter = chatter_classifier.model.predict(X[chatter_classifier.feature_cols])
   last_is_chatter = bool(y_is_chatter[-1])
 
   studyable = False
