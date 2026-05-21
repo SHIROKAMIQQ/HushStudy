@@ -4,3 +4,4 @@ recordings/
 __pycache__/
 tmp/
 thresholdprefs.db
+model_graphs/

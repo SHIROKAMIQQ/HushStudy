@@ -9,11 +9,18 @@ from sklearn.metrics import (
   accuracy_score, 
   precision_score, 
   recall_score,
+  confusion_matrix,
+  ConfusionMatrixDisplay
 )
+
+import matplotlib.pyplot as plt
 
 # =========================
 # LOAD DATASET
 # =========================
+GRAPH_DIR = "model_graphs"
+os.makedirs(GRAPH_DIR, exist_ok=True)
+
 DATASET_CSV="chatter_classifier_datasets/master.csv"
 df = pd.read_csv(DATASET_CSV)
 
@@ -81,3 +88,12 @@ print("\nMETRICS FOR CHATTER CLASSIFIER LogisticRegression:")
 print("Accuracy:", accuracy)
 print("Precision:", precision)
 print("Recall:", recall)
+
+cm = confusion_matrix(y_test, y_pred)
+disp = ConfusionMatrixDisplay(confusion_matrix=cm)
+disp.plot()
+plt.title("Chatter_Classifier Confusion Matrix")
+conf_matrix_path = f"{GRAPH_DIR}/ChatterClassifier_ConfusionMatrix.png"
+plt.savefig(conf_matrix_path)
+plt.close()
+print(f"Saved confusion matrix to: {conf_matrix_path}")
