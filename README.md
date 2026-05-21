@@ -20,7 +20,7 @@ Then, run `combine_datasets.py` to get a `master.csv` file in both dataset folde
 
 To host the server (assuming localhost), run:
 ```
-uvicorn main:app --host 127.0.0.1 --port 8000
+uvicorn main:app --host localhost --port 8000
 ```
 
 Now, your server is accessible via `http://localhost:8000/`.
