@@ -75,7 +75,7 @@ y_pred = model.predict(X_test)
 mse = mean_squared_error(y_test, y_pred)
 mae = mean_absolute_error(y_test, y_pred)
 
-print("\nMETRICS FOR CHATTER CLASSIFIER LogisticRegression:")
+print("\nMETRICS FOR DURATION PREDICTION RandomForestRegressor:")
 print(f"MSE: {mse}")
 print(f"MAE: {mae}")
 
@@ -111,3 +111,5 @@ residual_plot_path = f"{GRAPH_DIR}/DurationPrediction_ResidualPlot.png"
 plt.savefig(residual_plot_path)
 plt.close()
 print(f"Saved Residual Plot: {residual_plot_path}")
+
+print("\n")
