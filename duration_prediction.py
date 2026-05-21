@@ -3,12 +3,17 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.ensemble import RandomForestRegressor
 
+import os
+import matplotlib.pyplot as plt
 from sklearn.metrics import (
   mean_squared_error, 
   mean_absolute_error
 )
 
 # Load your dataset
+GRAPH_DIR = "model_graphs"
+os.makedirs(GRAPH_DIR, exist_ok=True)
+
 df = pd.read_csv("duration_prediction_datasets/master.csv")
 
 # Select features
@@ -73,3 +78,36 @@ mae = mean_absolute_error(y_test, y_pred)
 print("\nMETRICS FOR CHATTER CLASSIFIER LogisticRegression:")
 print(f"MSE: {mse}")
 print(f"MAE: {mae}")
+
+# Predicted vs Actual plot
+plt.figure(figsize=(7,7))
+plt.scatter(y_test, y_pred)
+plt.xlabel("Actual Duration")
+plt.ylabel("Predicted Duration")
+plt.title("Predicted vs Actual")
+
+min_val = min(y_test.min(), y_pred.min())
+max_val = max(y_test.max(), y_pred.max())
+plt.plot(
+  [min_val, max_val],
+  [min_val, max_val],
+  linestyle="--"
+)
+
+pred_vs_actual_path = f"{GRAPH_DIR}/DurationPrediction_PredVsActual.png"
+plt.savefig(pred_vs_actual_path)
+plt.close()
+print(f"Saved Predicted vs Actual graph: {pred_vs_actual_path}")
+
+# Residual Plot
+residuals = y_test - y_pred
+plt.figure(figsize=(7,6))
+plt.scatter(y_pred, residuals)
+plt.axhline(y=0, linestyle="--")
+plt.xlabel("Predicted Values")
+plt.ylabel("Residuals")
+plt.title("Residual Plot")
+residual_plot_path = f"{GRAPH_DIR}/DurationPrediction_ResidualPlot.png"
+plt.savefig(residual_plot_path)
+plt.close()
+print(f"Saved Residual Plot: {residual_plot_path}")
