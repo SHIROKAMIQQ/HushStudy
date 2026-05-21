@@ -153,10 +153,10 @@ async def upload_audio(request: Request, response: Response, file: UploadFile = 
     y_duration_prediction = [None] * len(y_is_chatter)
     studyable = True
 
-  
+  # Latency Report
   total_end = time.perf_counter()
   total_latency = total_end - total_start
-  print(f"LATENCY ASSESSMENT: {total_latency}")
+  print(f"LATENCY ASSESSMENT: {total_latency} seconds")
 
   debug_df = pd.DataFrame({
     "is_chatter": y_is_chatter,
