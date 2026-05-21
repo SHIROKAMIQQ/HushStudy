@@ -1,8 +1,15 @@
+import os
+
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, precision_score, recall_score
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.pipeline import Pipeline
+from sklearn.metrics import (
+  accuracy_score, 
+  precision_score, 
+  recall_score,
+)
 
 # =========================
 # LOAD DATASET
@@ -34,31 +41,43 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 
 # =========================
-# NORMALIZATION
+# HYPERPARAMETER TUNING
 # =========================
 
-scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train)
-X_test = scaler.transform(X_test)
+pipeline = Pipeline([
+  ("scaler", StandardScaler()),
+  ("model", LogisticRegression(max_iter=1000))
+])
 
-# =========================
-# TRAIN MODEL
-# =========================
-model = LogisticRegression(
-  max_iter=1000,
-  class_weight="balanced"
+param_grid = {
+  "model__C": [0.01, 0.1, 1, 10, 100],
+  "model__class_weight": [None, "balanced"]
+}
+
+grid_search = GridSearchCV(
+  estimator=pipeline,
+  param_grid=param_grid,
+  cv=5,
+  scoring="f1",
+  verbose=1,
+  n_jobs=-1
 )
-model.fit(X_train, y_train)
-y_pred = model.predict(X_test)
+grid_search.fit(X_train, y_train)
+print("BEST PARAMETERS FOR CHATTER CLASSIFIER LogisticRegression:")
+print(grid_search.best_params_)
+
+model = grid_search.best_estimator_
 
 # =========================
 # EVALUATION
 # =========================
+y_pred = model.predict(X_test)
 
 accuracy = accuracy_score(y_test, y_pred)
 precision = precision_score(y_test, y_pred)
 recall = recall_score(y_test, y_pred)
 
+print("\nMETRICS FOR CHATTER CLASSIFIER LogisticRegression:")
 print("Accuracy:", accuracy)
 print("Precision:", precision)
 print("Recall:", recall)
