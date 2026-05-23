@@ -30,8 +30,14 @@ feature_cols = [
     "volume_variance",
     "zero_crossing_rate",
     "spectral_centroid",
+    "volume_delta",
+    "peak_delta",
+    "centroid_delta",
+    "zcr_decay",
     "rolling_avg_volume",
-    "rolling_peak_volume"
+    "rolling_peak_volume",
+    "rolling_decay",
+    "centroid_volatility"
 ]
 
 X = df[feature_cols]
